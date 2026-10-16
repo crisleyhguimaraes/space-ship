@@ -30,11 +30,11 @@ Feito com Three.js, Vite e TypeScript. Sem backend, sem arquivos de áudio: todo
 | Brumal | campos de neve, mar gelado, abetos, manhã pálida |
 | Zafir | oceano com ilhas, selva, vulcão numa ilha |
 | Cinza | planície de cinzas e lava, céu vermelho ao anoitecer |
-| Monstrus | planeta de campos, bosques e lagos, pensado para criaturas no estilo Pokémon |
-| Digitalis | oceano, vulcão e geleira em tons de ciano, pensado para criaturas no estilo Digimon |
-| Animus | vilas, floresta, deserto e gelo, pensado para heróis, vilões e criaturas de uns 19 animes |
+| Monstrus | campos, bosques e lagos, com monstrinhos: porcos e galinhas em bando, cogumelos e árvores que andam, ciclopes e yetis que caçam |
+| Digitalis | oceano, vulcão, deserto e floresta em tons de ciano, com criaturas que vivem ao lado da própria forma evoluída e mechs pilotados que as caçam |
+| Animus | vilas, floresta, deserto e gelo: aventureiros nas vilas, esqueletos que os caçam, cavalos, vacas, dinossauros e um dragão |
 
-Os três últimos vêm com a estrutura pronta e o elenco descrito em [docs/ROSTER.md](docs/ROSTER.md) (101 entradas com papel e comportamento). **Os modelos dos personagens não estão no repositório**: Pokémon, Digimon e os animes são propriedade de terceiros. Coloque você mesmo os arquivos em `public/models/`; o que faltar é ignorado.
+Os três últimos têm elenco próprio, em `src/roster.ts`, com papel, habitat e presas de cada bicho. Os modelos deles vêm no repositório, todos em CC0.
 
 ![Vulcão e lago](docs/screenshots/04-vulcao-lago.jpg)
 ![Rubra](docs/screenshots/05-rubra.jpg)
@@ -64,7 +64,7 @@ npm install
 npm run dev
 ```
 
-Abra a URL que o terminal mostrar. **Os modelos não vêm no repositório**; veja [docs/ASSETS.md](docs/ASSETS.md) para baixar cada um.
+Abra a URL que o terminal mostrar. Os modelos de Monstrus, Digitalis e Animus vêm no repositório. **Os demais não vêm**; veja [docs/ASSETS.md](docs/ASSETS.md) para baixar cada um.
 
 ```sh
 npm test         # lógica pura: voo, órbitas, terreno, bandos, predadores, clima, dia e noite
@@ -79,7 +79,7 @@ Parâmetros de URL úteis:
 | Parâmetro | Efeito |
 |---|---|
 | `?hora=0.5` | abre ao meio-dia (`0.05` é noite) |
-| `?em=rubra` | nasce ao lado de outro planeta (`brumal`, `zafir`, `cinza`) |
+| `?em=rubra` | nasce ao lado de outro planeta (`brumal`, `zafir`, `cinza`, `monstrus`, `digitalis`, `animus`) |
 | `?dpr=2` | força resolução alta para estressar a GPU |
 
 ## Controles
@@ -113,4 +113,4 @@ Decisões e orçamentos estão em [DECISIONS.md](DECISIONS.md). O desenho da fau
 
 ## Créditos
 
-Nave, bichos, árvores, rochas e texturas são de artistas do Sketchfab, com crédito dentro do jogo (tecla **C**) e a lista completa com links e licenças em [docs/ASSETS.md](docs/ASSETS.md). Ruído simplex de Ashima Arts (MIT).
+Nave, bichos de Kaelith, árvores, rochas e texturas são de artistas do Sketchfab, com crédito dentro do jogo (tecla **C**) e a lista completa com links e licenças em [docs/ASSETS.md](docs/ASSETS.md). Os elencos de Monstrus, Digitalis e Animus são da Quaternius e de Kay Lousberg (KayKit), em CC0. Ruído simplex de Ashima Arts (MIT).

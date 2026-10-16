@@ -5,6 +5,6 @@ dist
 assets-src
 public/models/*
 !public/models/monsters/
-!public/models/machines/
+!public/models/creatures/
 !public/models/adventurers/
 public/textures

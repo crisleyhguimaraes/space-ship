@@ -1,9 +1,17 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { ROSTERS, type Role, modelUrl, speciesFromRoster } from './roster.ts'
 
 const ROLES: Role[] = ['grazer', 'villager', 'flock', 'swimmer', 'hunter', 'sky-hunter']
+const ALL = Object.values(ROSTERS).flat()
+
+// the JSON chunk of a .glb starts at byte 20 and its length sits at byte 12
+function clipNames(file: string): string[] {
+  const bytes = readFileSync(file)
+  const json = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12))) as { animations?: { name: string }[] }
+  return (json.animations ?? []).map((a) => a.name)
+}
 
 test('todo elenco tem ids únicos, arquivos únicos e tamanhos positivos', () => {
   for (const [name, roster] of Object.entries(ROSTERS)) {
@@ -14,8 +22,13 @@ test('todo elenco tem ids únicos, arquivos únicos e tamanhos positivos', () =>
 })
 
 test('todo arquivo do elenco existe em public/models, senão quem clona vê um planeta vazio', () => {
-  for (const roster of Object.values(ROSTERS)) {
-    for (const r of roster) assert.ok(existsSync(`public${modelUrl(r)}`), `falta ${modelUrl(r)}`)
+  for (const r of ALL) assert.ok(existsSync(`public${modelUrl(r)}`), `falta ${modelUrl(r)}`)
+})
+
+test('todo clipe pedido pelo elenco existe no arquivo, senão o bicho fica parado', () => {
+  for (const r of ALL.filter((x) => x.clips)) {
+    const names = clipNames(`public${modelUrl(r)}`)
+    for (const clip of [r.clips!.idle, r.clips!.walk, r.clips!.run].filter(Boolean)) assert.ok(names.includes(clip!), `${r.file} não tem o clipe ${clip}`)
   }
 })
 
@@ -33,25 +46,24 @@ test('cada planeta tem bichos no chão, no ar, na água e caçadores', () => {
   for (const [name, roster] of Object.entries(ROSTERS)) {
     const roles = new Set(roster.map((r) => r.role))
     for (const role of ['grazer', 'flock', 'swimmer', 'hunter', 'sky-hunter'] as const) assert.ok(roles.has(role), `${name} sem ${role}`)
-    assert.ok(roster.length >= 12, `${name} tem só ${roster.length} espécies`)
+    assert.ok(roster.length >= 20, `${name} tem só ${roster.length} espécies`)
   }
 })
 
 test('só o planeta com vilas tem aldeões', () => {
   assert.ok(ROSTERS.adventurers.some((r) => r.role === 'villager'))
   assert.ok(!ROSTERS.monsters.some((r) => r.role === 'villager'))
-  assert.ok(!ROSTERS.machines.some((r) => r.role === 'villager'))
+  assert.ok(!ROSTERS.creatures.some((r) => r.role === 'villager'))
 })
 
 test('cada papel vira o tipo de espécie certo', () => {
-  const sample = (role: Role) => ROSTERS.adventurers.find((r) => r.role === role) ?? ROSTERS.monsters.find((r) => r.role === role)!
-  const kinds = ROLES.map((role) => speciesFromRoster(sample(role)).kind)
+  const kinds = ROLES.map((role) => speciesFromRoster(ALL.find((r) => r.role === role)!).kind)
   assert.deepEqual(kinds, ['herd', 'herd', 'flock', 'flock', 'predator', 'predator'])
 })
 
-test('aldeão em pé e caçador no ar não passam pelo endireitamento automático', () => {
-  const villager = ROSTERS.adventurers.find((r) => r.role === 'villager')!
-  const resolved = speciesFromRoster(villager)
-  assert.equal(resolved.kind, 'herd')
-  if (resolved.kind === 'herd') assert.equal(resolved.species.orient, false)
+test('nenhum bicho do elenco passa pelo endireitamento automático, porque os packs já exportam virados para a frente', () => {
+  for (const r of ALL) {
+    const resolved = speciesFromRoster(r)
+    if (resolved.kind !== 'flock') assert.ok(!resolved.species.orient, r.id)
+  }
 })

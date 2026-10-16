@@ -129,7 +129,7 @@ export const WORLDS: Record<string, WorldProfile> = {
     herds: [],
     flocks: [],
     predators: [],
-    roster: 'machines',
+    roster: 'creatures',
     startDay: 0.62,
   },
   animus: {

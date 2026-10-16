@@ -84,13 +84,13 @@ Perfis em `worlds.ts`. O mesmo acervo é combinado de formas diferentes.
 
 ## Mundos temáticos
 
-Perfis em `worlds.ts`, elenco em `roster.ts` (lista completa gerada em `docs/ROSTER.md`).
+Perfis em `worlds.ts`, elenco em `roster.ts`. Todos os modelos são CC0 e vêm no repositório (origem em `docs/ASSETS.md`).
 
 | Mundo | Layout | Elenco |
 |---|---|---|
-| Monstrus | campos, bosques e lagos | 22 criaturas estilo Pokémon: aves em bando, roedores e cavalos que pastam, gigantes solitários, caçadores que só perseguem o que comem, peixes no lago e alguns que saltam |
-| Digitalis | oceano, vulcão, geleira | 22 criaturas estilo Digimon, com habitat por tipo (gelo, deserto, floresta, água) |
-| Animus | vilas, floresta a leste, deserto a oeste, gelo ao norte | 19 séries, cada uma com herói (vive na vila), vilão (caça o herói e a nave) e uma criatura. Três vilas procedurais de nove casas |
+| Monstrus | campos, bosques e lagos | 21 monstrinhos: morcegos e abelhas em bando, porcos, galinhas, cogumelos e árvores que pastam e fogem, ciclopes, demônios e yetis que caçam, caranguejos e um ancião que salta no lago |
+| Digitalis | oceano, vulcão, deserto, floresta | 26 criaturas, várias ao lado da própria forma evoluída, com habitat por tipo; mechs pilotados por bichos caçam no chão, drones e um dragão evoluído caçam do ar, glubs e squidles nadam no lago |
+| Animus | vilas, floresta a leste, deserto a oeste, gelo ao norte | aventureiros vivem nas três vilas procedurais e esqueletos os caçam; cavalos, vacas, alpacas, cervos e dinossauros pastam, lobos, raptores e um tiranossauro caçam, um dragão patrulha o céu e carpas e peixes-espada nadam no lago |
 
 Papéis: grazer pasta e foge, villager vive ancorado numa vila, flock voa em grupo, swimmer nada no lago, hunter e sky-hunter caçam presas do mesmo elenco ou a nave. Os testes garantem que todo caçador só persegue espécies que existem no elenco dele.
 
