@@ -19,12 +19,14 @@ const gas = (low: Rgb, mid: Rgb, high: Rgb, atmosphere: Rgb): ShaderLook => ({ k
 
 export const SYSTEM: PlanetSpec[] = [
   { key: 'cinza', name: 'Cinza', radius: 30, orbit: { radius: 700, period: 900, phase: 0.1, inclination: 0.02 }, look: { ...rock([0.05, 0.03, 0.03], [0.18, 0.12, 0.1], [0.3, 0.25, 0.22], [0.9, 0.4, 0.15]), glow: [1.6, 0.35, 0.05] }, landable: true },
+  { key: 'monstrus', name: 'Monstrus', radius: 52, orbit: { radius: 1100, period: 1200, phase: 0.35, inclination: 0.03 }, look: rock([0.05, 0.28, 0.1], [0.22, 0.6, 0.2], [0.9, 0.85, 0.5], [0.5, 1.0, 0.6], 0.8), landable: true },
   { key: 'rubra', name: 'Rubra', radius: 45, orbit: { radius: 1500, period: 1500, phase: 0.6, inclination: 0.03 }, look: { kind: 'textured', color: '/textures/mars-color.webp', normal: '/textures/mars-normal.webp', atmosphere: [1.0, 0.45, 0.2] }, landable: true },
   {
     key: 'kaelith', name: 'Kaelith', radius: 60, orbit: { radius: 2500, period: 2200, phase: 0.0, inclination: 0.0 },
     look: rock([0.02, 0.16, 0.24], [0.1, 0.42, 0.24], [0.72, 0.66, 0.92], [0.35, 0.62, 1.0], 1), landable: true,
     moons: [{ name: 'Vela', radius: 12, orbit: { radius: 170, period: 240, phase: 0.2, inclination: 0.15 }, look: rock([0.3, 0.3, 0.32], [0.5, 0.5, 0.52], [0.7, 0.7, 0.72], [0.2, 0.2, 0.25]) }],
   },
+  { key: 'digitalis', name: 'Digitalis', radius: 50, orbit: { radius: 3000, period: 2600, phase: 0.9, inclination: 0.06 }, look: rock([0.02, 0.2, 0.35], [0.1, 0.6, 0.75], [0.8, 1.0, 1.0], [0.3, 0.9, 1.0], 0.5), landable: true },
   { key: 'zafir', name: 'Zafir', radius: 55, orbit: { radius: 3600, period: 3000, phase: 0.45, inclination: 0.05 }, look: rock([0.02, 0.12, 0.4], [0.05, 0.3, 0.6], [0.6, 0.75, 0.7], [0.4, 0.7, 1.0], 0.9), landable: true },
   { key: 'brumal', name: 'Brumal', radius: 40, orbit: { radius: 4800, period: 4000, phase: 0.8, inclination: 0.08 }, look: rock([0.55, 0.65, 0.8], [0.8, 0.88, 0.95], [0.95, 0.97, 1.0], [0.6, 0.8, 1.0], 0.35), landable: true },
   {
@@ -36,6 +38,7 @@ export const SYSTEM: PlanetSpec[] = [
       { name: 'Teu', radius: 24, orbit: { radius: 560, period: 700, phase: 0.7, inclination: 0.3 }, look: rock([0.2, 0.25, 0.3], [0.35, 0.4, 0.45], [0.6, 0.65, 0.7], [0.3, 0.4, 0.5]) },
     ],
   },
+  { key: 'animus', name: 'Animus', radius: 58, orbit: { radius: 7200, period: 5800, phase: 0.15, inclination: 0.05 }, look: rock([0.35, 0.15, 0.3], [0.85, 0.5, 0.5], [1.0, 0.9, 0.7], [1.0, 0.6, 0.7], 0.7), landable: true },
   { key: 'ocre', name: 'Ocre', radius: 38, orbit: { radius: 8000, period: 6500, phase: 0.95, inclination: 0.06 }, look: rock([0.45, 0.3, 0.15], [0.75, 0.55, 0.3], [0.9, 0.8, 0.6], [0.9, 0.7, 0.4]) },
   {
     key: 'lilas', name: 'Lilás', radius: 110, orbit: { radius: 9500, period: 8000, phase: 0.55, inclination: 0.02 },

@@ -9,7 +9,7 @@ import { loadGltf } from './gltf.ts'
 import { loadShip } from './ship.ts'
 import { buildSpace, loadSpaceTextures, type Body } from './space.ts'
 import { FLORA, SURFACE, buildSurface, loadGroundTextures } from './surface.ts'
-import { FLOCK_SPECIES, HERD_SPECIES, PREDATOR_SPECIES } from './wildlife.ts'
+import { buildCastFor } from './cast.ts'
 import { WORLDS } from './worlds.ts'
 import { VOLCANO, shapeTerrain } from './biomes.ts'
 import { createHeightmap } from './terrain.ts'
@@ -18,6 +18,9 @@ const TRANSITION_SECONDS = 2.5
 const LANDING_RANGE_RADII = 1.5
 const AUTO_LAND_DISTANCE = 14
 const SPAWN_RADII = 12
+const TAKEOFF_RADII = 3.2
+const TAKEOFF_SPEED = 30
+const LANDING_LOCKOUT_SECONDS = 8
 const BASE_FOV = 60
 const ZOOM_FOV = 26
 const BLOOM_BASE = 1.1
@@ -34,6 +37,7 @@ const BANK_GAIN = 0.45
 const BANK_MAX = 0.8
 const PITCH_GAIN = 0.12
 const PITCH_MAX = 0.35
+const FORWARD = new Vector3(0, 0, -1)
 const SURFACE_PITCH = new Quaternion().setFromEuler(new Euler(-0.22, 0, 0))
 
 type Mode = 'space' | 'surface' | 'reentry' | 'takeoff'
@@ -46,8 +50,12 @@ const startDay = Number(params.get('hora') ?? 0.72)
 renderer.setPixelRatio(dprParam || Math.min(devicePixelRatio, 2))
 renderer.setSize(innerWidth, innerHeight)
 
+const hud = createHud()
 const camera = new PerspectiveCamera(BASE_FOV, innerWidth / innerHeight, 0.5, 50000)
-const [raven, spaceTextures] = await Promise.all([loadShip(), loadSpaceTextures()])
+const [raven, spaceTextures] = await Promise.all([loadShip(), loadSpaceTextures()]).catch((error: unknown) => {
+  hud.showFatal('Faltam arquivos do jogo. Veja docs/ASSETS.md para baixar os modelos e texturas.', String(error))
+  throw error
+})
 const space = buildSpace(spaceTextures)
 const bodies = space.bodies
 const kaelith = bodies.find((b) => b.key === 'kaelith')!
@@ -57,47 +65,30 @@ let targetIndex = space.targets.indexOf(kaelith)
 
 // surfaces stream in while the player flies; each landable planet gets its own world
 type Surface = ReturnType<typeof buildSurface>
-type SurfaceAssets = Parameters<typeof buildSurface>[1]
+type SharedAssets = Omit<Parameters<typeof buildSurface>[1], 'wildlife'>
 const surfaces = new Map<string, Surface>()
 const loadingWorlds = new Set<string>()
 let current: Surface | null = null
 let landed: Body = kaelith
-let assetsPromise: Promise<SurfaceAssets> | null = null
+let sharedPromise: Promise<SharedAssets> | null = null
 
-function surfaceAssets(): Promise<SurfaceAssets> {
-  assetsPromise ??= (async () => {
-    const [herdModels, flockModels, predatorModels, fly, flora, ocean, groundTextures] = await Promise.all([
-      Promise.all(HERD_SPECIES.map((s) => loadGltf(s.url))),
-      Promise.all(FLOCK_SPECIES.map((s) => loadGltf(s.url))),
-      Promise.all(PREDATOR_SPECIES.map((s) => loadGltf(s.url))),
-      loadGltf('/models/fly.glb'),
-      Promise.all(FLORA.map((f) => loadGltf(f.url))),
-      loadGltf('/models/ocean.glb'),
-      loadGroundTextures(),
-    ])
-    return {
-      wildlife: {
-        herds: herdModels.map((gltf) => ({ scene: gltf.scene, clips: gltf.animations })),
-        flocks: flockModels.map((gltf) => ({ scene: gltf.scene, clips: gltf.animations })),
-        predators: predatorModels.map((gltf) => ({ scene: gltf.scene, clips: gltf.animations })),
-        fly: fly.scene,
-      },
-      flora: flora.map((gltf) => gltf.scene),
-      ocean: { scene: ocean.scene, clip: ocean.animations[0] },
-      ground: groundTextures,
-    }
+// flora, lake and ground textures are shared by every world; each world's animals load on their own
+function sharedAssets(): Promise<SharedAssets> {
+  sharedPromise ??= (async () => {
+    const [flora, ocean, groundTextures] = await Promise.all([Promise.all(FLORA.map((f) => loadGltf(f.url))), loadGltf('/models/ocean.glb'), loadGroundTextures()])
+    return { flora: flora.map((gltf) => gltf.scene), ocean: { scene: ocean.scene, clip: ocean.animations[0] }, ground: groundTextures }
   })()
-  return assetsPromise
+  return sharedPromise
 }
 
 async function prepareWorld(body: Body) {
   const profile = WORLDS[body.key]
   if (!profile || surfaces.has(body.key) || loadingWorlds.has(body.key)) return
   loadingWorlds.add(body.key)
-  const assets = await surfaceAssets()
+  const [assets, wildlife] = await Promise.all([sharedAssets(), buildCastFor(profile)])
   const heightmap = createHeightmap({ size: 257, worldSize: 2000, maxHeight: 120, seed: profile.seed })
   shapeTerrain(heightmap, profile)
-  surfaces.set(body.key, buildSurface(heightmap, assets, { ...profile, startDay: params.has('hora') ? startDay : profile.startDay }))
+  surfaces.set(body.key, buildSurface(heightmap, { ...assets, wildlife }, { ...profile, startDay: params.has('hora') ? startDay : profile.startDay }))
   loadingWorlds.delete(body.key)
 }
 
@@ -123,7 +114,6 @@ composer.addPass(
 )
 
 const input = createInput(canvas)
-const hud = createHud()
 const audio = createAudio()
 const flight = createFlight()
 const home = bodies.find((b) => b.key === params.get('em')) ?? kaelith
@@ -134,6 +124,7 @@ let swapped = false
 let hull = 100
 let impact = 0
 let burnFlash = 0
+let landingLockout = 0
 const orbitReturn = { offset: new Vector3(), quaternion: new Quaternion() }
 const turnRate = { yaw: 0, pitch: 0 }
 let alertText = ''
@@ -222,9 +213,10 @@ function frame() {
 function flySpace(controls: typeof IDLE, land: boolean, dt: number) {
   stepFlight(flight, controls, dt)
   keepOutOfPlanets()
+  landingLockout = Math.max(0, landingLockout - dt)
   const target = landingBody()
   const grazing = surfaceDistance(target) < AUTO_LAND_DISTANCE && divingAt(target)
-  if (surfaces.has(target.key) && (grazing || (land && nearPlanet()))) {
+  if (landingLockout === 0 && surfaces.has(target.key) && (grazing || (land && nearPlanet()))) {
     landed = target
     beginTransition('reentry')
   }
@@ -368,9 +360,11 @@ function enterSurface() {
 function enterSpace() {
   space.scene.add(ship)
   renderPass.mainScene = space.scene
-  flight.position.copy(landed.position).add(orbitReturn.offset)
-  flight.quaternion.copy(orbitReturn.quaternion)
-  flight.speed = 20
+  const away = orbitReturn.offset.clone().normalize()
+  flight.position.copy(landed.position).addScaledVector(away, landed.radius * TAKEOFF_RADII)
+  flight.quaternion.setFromUnitVectors(FORWARD, away)
+  flight.speed = TAKEOFF_SPEED
+  landingLockout = LANDING_LOCKOUT_SECONDS
   hull = 100
   snapCamera()
 }
@@ -413,7 +407,7 @@ function nearPlanet() {
 }
 
 function hintFor() {
-  if (mode === 'space' && nearPlanet()) return surfaces.has(landingBody().key) ? 'E · descer' : 'preparando a descida…'
+  if (mode === 'space' && landingLockout === 0 && nearPlanet()) return surfaces.has(landingBody().key) ? 'E · descer' : 'preparando a descida…'
   if (mode === 'surface') return sightingText || 'suba acima de 150 para decolar'
   return ''
 }

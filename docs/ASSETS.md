@@ -32,6 +32,10 @@ Para extrair uma árvore de uma cena grande, converta o FBX com `FBX2glTF`, deix
 | mars-color.webp, mars-normal.webp | [Mars, free, low-poly, the9thearl](https://sketchfab.com/3d-models/0781cd3ab59c4e6f94ae68d28fbf30a8), mapas 2K |
 | ground-dirt.webp, ground-moss.webp, ground-rock.webp, ground-snow.webp | recortes quadrados de 1024 px das texturas das cenas de floresta, das rochas e da neve acima |
 
+## Mundos temáticos
+
+Os modelos de personagens dos mundos Monstrus, Digitalis e Animus não são fornecidos. A lista de arquivos esperados, com papel e grupo de cada um, está em [ROSTER.md](ROSTER.md). Use apenas modelos que você tem direito de usar e distribuir.
+
 ## Sem os arquivos
 
 O jogo não abre sem eles. Os candidatos para substituir os modelos estáticos por versões animadas estão na conversa de desenvolvimento: elefante e Frost Predator aprovados, águia, pterodáctilo, antílope e alce em avaliação.

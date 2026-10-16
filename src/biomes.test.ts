@@ -6,9 +6,9 @@ import { createHeightmap, sampleHeight } from './terrain.ts'
 test('pesos de bioma somam um em qualquer ponto', () => {
   for (const [x, z] of [[0, 0], [-900, 0], [900, 0], [0, -900], [300, 500], [-500, -500]]) {
     const b = biomeAt(x, z)
-    const sum = b.ocean + b.desert + b.forest + b.meadow
+    const sum = b.ocean + b.desert + b.forest + b.meadow + b.ice
     assert.ok(Math.abs(sum - 1) < 1e-6, `soma ${sum} em ${x},${z}`)
-    for (const w of [b.ocean, b.desert, b.forest, b.meadow]) assert.ok(w >= 0 && w <= 1)
+    for (const w of [b.ocean, b.desert, b.forest, b.meadow, b.ice]) assert.ok(w >= -1e-9 && w <= 1 + 1e-9)
   }
 })
 
@@ -32,4 +32,17 @@ test('o relevo moldado afunda o oceano, aplaina o deserto e ergue o vulcão', ()
   const crater = sampleHeight(h, VOLCANO.x, VOLCANO.z)
   assert.ok(rim > VOLCANO.height * 0.7, `borda ${rim}`)
   assert.ok(crater < rim - 10, `cratera ${crater} borda ${rim}`)
+})
+
+test('todo layout fecha em um e o mundo animê tem gelo ao norte, deserto a oeste, floresta a leste', () => {
+  for (const layout of ['kaelith', 'desert', 'ice', 'ocean', 'lava', 'verdant', 'anime'] as const) {
+    for (const [x, z] of [[0, 0], [-700, 100], [700, -300], [0, -900], [300, 600]]) {
+      const b = biomeAt(x, z, layout)
+      assert.ok(Math.abs(b.ocean + b.desert + b.forest + b.meadow + b.ice - 1) < 1e-6, `${layout} em ${x},${z}`)
+    }
+  }
+  assert.ok(biomeAt(0, -800, 'anime').ice > 0.8)
+  assert.ok(biomeAt(-800, 100, 'anime').desert > 0.8)
+  assert.ok(biomeAt(800, 100, 'anime').forest > 0.8)
+  assert.ok(biomeAt(0, 300, 'anime').meadow > 0.6)
 })

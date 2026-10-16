@@ -23,10 +23,10 @@ test('cometa passa perto do sol no periélio e longe no afélio', () => {
   assert.ok(Math.abs(far - 11000) < 1)
 })
 
-test('o catálogo tem dez planetas com órbitas crescentes e nomes únicos', () => {
-  assert.equal(SYSTEM.length, 10)
+test('o catálogo tem treze planetas com órbitas crescentes e nomes únicos', () => {
+  assert.equal(SYSTEM.length, 13)
   const names = new Set(SYSTEM.map((p) => p.name))
-  assert.equal(names.size, 10)
+  assert.equal(names.size, 13)
   for (let i = 1; i < SYSTEM.length; i++) assert.ok(SYSTEM[i].orbit.radius > SYSTEM[i - 1].orbit.radius)
   assert.ok(SYSTEM.filter((p) => p.landable).length >= 1)
 })

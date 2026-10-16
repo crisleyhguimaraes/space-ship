@@ -82,6 +82,18 @@ Perfis em `worlds.ts`. O mesmo acervo é combinado de formas diferentes.
 
 `?em=rubra` nasce ao lado de Rubra. As superfícies carregam em segundo plano quando a nave chega a 12 raios do planeta.
 
+## Mundos temáticos
+
+Perfis em `worlds.ts`, elenco em `roster.ts` (lista completa gerada em `docs/ROSTER.md`).
+
+| Mundo | Layout | Elenco |
+|---|---|---|
+| Monstrus | campos, bosques e lagos | 22 criaturas estilo Pokémon: aves em bando, roedores e cavalos que pastam, gigantes solitários, caçadores que só perseguem o que comem, peixes no lago e alguns que saltam |
+| Digitalis | oceano, vulcão, geleira | 22 criaturas estilo Digimon, com habitat por tipo (gelo, deserto, floresta, água) |
+| Animus | vilas, floresta a leste, deserto a oeste, gelo ao norte | 19 séries, cada uma com herói (vive na vila), vilão (caça o herói e a nave) e uma criatura. Três vilas procedurais de nove casas |
+
+Papéis: grazer pasta e foge, villager vive ancorado numa vila, flock voa em grupo, swimmer nada no lago, hunter e sky-hunter caçam presas do mesmo elenco ou a nave. Os testes garantem que todo caçador só persegue espécies que existem no elenco dele.
+
 ## Ambiente
 
 ### Ciclo de dia e noite

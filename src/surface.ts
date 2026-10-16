@@ -25,26 +25,27 @@ import { SEA_LEVEL, VOLCANO, biomeAt, type Biome } from './biomes.ts'
 import { lowestBasin, sampleHeight, type Heightmap } from './terrain.ts'
 import { buildVolcano } from './volcano.ts'
 import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js'
-import { buildWildlife, type ShipSense, type WildlifeModels } from './wildlife.ts'
+import { buildVillages } from './villages.ts'
+import { buildWildlife, type Cast, type ShipSense } from './wildlife.ts'
 import type { WorldProfile } from './worlds.ts'
 
 export const SURFACE = { ceiling: 150, hoverGap: 4, edge: 950, spawn: new Vector3(0, 110, 650) }
 
 type Placement = { minHeight: number; maxHeight: number; maxSlope: number; scale: [number, number]; sink: number }
-type Density = Partial<Record<'forest' | 'meadow' | 'desert', number>>
+type Density = Partial<Record<'forest' | 'meadow' | 'desert' | 'ice', number>>
 type Flora = { url: string; count: number; rule: Placement; biomes: Density; volcanoOk?: boolean }
 
 export const FLORA: Flora[] = [
-  { url: '/models/pine.glb', count: 500, rule: { minHeight: 14, maxHeight: 85, maxSlope: 0.7, scale: [0.6, 1.0], sink: 0.4 }, biomes: { forest: 1, meadow: 0.35 } },
+  { url: '/models/pine.glb', count: 500, rule: { minHeight: 14, maxHeight: 85, maxSlope: 0.7, scale: [0.6, 1.0], sink: 0.4 }, biomes: { forest: 1, meadow: 0.35, ice: 0.4 } },
   { url: '/models/tree-night.glb', count: 1500, rule: { minHeight: 14, maxHeight: 88, maxSlope: 0.8, scale: [5, 8], sink: 0.3 }, biomes: { forest: 1, meadow: 0.3 } },
   { url: '/models/tree-night2.glb', count: 700, rule: { minHeight: 12, maxHeight: 92, maxSlope: 1.0, scale: [4, 6], sink: 0.2 }, biomes: { forest: 0.8, meadow: 0.6, desert: 0.15 } },
-  { url: '/models/tree-fir.glb', count: 1200, rule: { minHeight: 20, maxHeight: 95, maxSlope: 0.9, scale: [1.6, 2.4], sink: 0.3 }, biomes: { forest: 1, meadow: 0.4 } },
+  { url: '/models/tree-fir.glb', count: 1200, rule: { minHeight: 20, maxHeight: 95, maxSlope: 0.9, scale: [1.6, 2.4], sink: 0.3 }, biomes: { forest: 1, meadow: 0.4, ice: 0.7 } },
   { url: '/models/bush.glb', count: 1200, rule: { minHeight: 12, maxHeight: 95, maxSlope: 1.0, scale: [1.2, 2.2], sink: 0.4 }, biomes: { forest: 0.7, meadow: 0.7, desert: 0.25 } },
-  { url: '/models/rocks.glb', count: 300, rule: { minHeight: 12, maxHeight: 180, maxSlope: 1.4, scale: [0.8, 2.6], sink: 0.5 }, biomes: { forest: 0.4, meadow: 0.6, desert: 1 }, volcanoOk: true },
+  { url: '/models/rocks.glb', count: 300, rule: { minHeight: 12, maxHeight: 180, maxSlope: 1.4, scale: [0.8, 2.6], sink: 0.5 }, biomes: { forest: 0.4, meadow: 0.6, desert: 1, ice: 0.5 }, volcanoOk: true },
 ]
 
 export type GroundTextures = { dirt: Texture; moss: Texture; rock: Texture; snow: Texture }
-export type SurfaceModels = { wildlife: WildlifeModels; flora: Object3D[]; ocean: { scene: Object3D; clip: AnimationClip }; ground: GroundTextures }
+export type SurfaceModels = { wildlife: Cast; flora: Object3D[]; ocean: { scene: Object3D; clip: AnimationClip }; ground: GroundTextures }
 
 export async function loadGroundTextures(): Promise<GroundTextures> {
   const loader = new TextureLoader()
@@ -71,7 +72,10 @@ export function buildSurface(heightmap: Heightmap, models: SurfaceModels, profil
   scene.fog = atmosphere.fog
   scene.add(...atmosphere.objects)
   const lake = profile.lake ? buildLake(models.ocean, heightmap, layout, profile.volcano) : shoreline(heightmap, layout, random)
+  const villages = buildVillages(heightmap, layout, profile.villages ?? 0, random)
+  const blocked = (x: number, z: number) => lake.contains(x, z) || villages.contains(x, z)
   scene.add(buildTerrain(heightmap, models.ground, profile))
+  for (const object of villages.objects) scene.add(object)
   if (lake.object) scene.add(lake.object)
   const sea = profile.sea ? buildSea(models.ocean.scene) : null
   if (sea) scene.add(sea.mesh)
@@ -79,15 +83,15 @@ export function buildSurface(heightmap: Heightmap, models: SurfaceModels, profil
     const weight = profile.flora[floraName(flora.url)] ?? 0
     if (weight <= 0) return
     const model = instanceModel(models.flora[i].clone(), flora.count)
-    scene.add(...scatter(model, flora, weight, heightmap, random, lake.contains, layout, profile.volcano))
+    for (const part of scatter(model, flora, weight, heightmap, random, blocked, layout, profile.volcano)) scene.add(part)
   })
 
   const floor = profile.sea ? SEA_LEVEL : -Infinity
   const ground = (x: number, z: number) => Math.max(sampleHeight(heightmap, x, z), floor, lake.contains(x, z) ? lake.level : -Infinity)
   const volcano = profile.volcano ? buildVolcano(ground) : null
   if (volcano) scene.add(...volcano.objects)
-  const wildlife = buildWildlife(models.wildlife, heightmap, ground, lake, { herds: profile.herds, flocks: profile.flocks, predators: profile.predators, layout, volcano: profile.volcano }, random)
-  scene.add(...wildlife.objects)
+  const wildlife = buildWildlife(models.wildlife, heightmap, ground, lake, { layout, volcano: profile.volcano, villages: villages.centres }, random)
+  for (const object of wildlife.objects) scene.add(object)
 
   return {
     scene,
@@ -153,14 +157,15 @@ function splatGround(shader: WebGLProgramParametersWithUniforms, ground: GroundT
       vec2 guv = vGroundPos.xz;
       float groundHeight = vGroundPos.y;
       float slope = 1.0 - vGroundUp;
-      vec3 bio = texture2D(biomeMap, (guv + 1000.0) / 2000.0).rgb;
+      vec4 bio = texture2D(biomeMap, (guv + 1000.0) / 2000.0);
       float volcano = 1.0 - smoothstep(uVolcano.z * 0.5, uVolcano.z * 1.1, distance(guv, uVolcano.xy));
       vec3 rockTex = groundTile(rockMap, guv, 16.0);
       vec3 ground = mix(groundTile(dirtMap, guv, 22.0), groundTile(mossMap, guv, 30.0), smoothstep(9.0, 20.0, groundHeight));
       ground = mix(ground, ground * vec3(0.72, 0.86, 0.66), bio.g * 0.6);
       vec3 sand = vec3(0.80, 0.70, 0.52) * (0.7 + 0.6 * dot(rockTex, vec3(0.333)));
       ground = mix(ground, sand, clamp(bio.r + bio.b, 0.0, 1.0));
-      ground = mix(ground, groundTile(snowMap, guv, 24.0), smoothstep(uSnowLine, uSnowLine + 18.0, groundHeight) * (1.0 - volcano) * (1.0 - bio.r));
+      float snowy = max(smoothstep(uSnowLine, uSnowLine + 18.0, groundHeight), bio.a);
+      ground = mix(ground, groundTile(snowMap, guv, 24.0), snowy * (1.0 - volcano) * (1.0 - bio.r));
       ground = mix(ground, rockTex, smoothstep(0.3, 0.55, slope));
       ground = mix(ground, vec3(0.16, 0.13, 0.12) * (0.6 + 0.8 * dot(rockTex, vec3(0.333))), volcano * 0.85);
       diffuseColor.rgb *= ground * uTint;`,
@@ -190,7 +195,7 @@ function scatter(model: InstancedModel, flora: Flora, weight: number, h: Heightm
 }
 
 function density(weights: Density, biome: Biome): number {
-  return (weights.forest ?? 0) * biome.forest + (weights.meadow ?? 0) * biome.meadow + (weights.desert ?? 0) * biome.desert
+  return (weights.forest ?? 0) * biome.forest + (weights.meadow ?? 0) * biome.meadow + (weights.desert ?? 0) * biome.desert + (weights.ice ?? 0) * biome.ice
 }
 
 function floraName(url: string): string {
@@ -203,7 +208,7 @@ function buildBiomeMap(worldSize: number, layout: WorldProfile['layout']): DataT
   for (let j = 0; j < size; j++) {
     for (let i = 0; i < size; i++) {
       const b = biomeAt((i / (size - 1) - 0.5) * worldSize, (j / (size - 1) - 0.5) * worldSize, layout)
-      data.set([b.desert * 255, b.forest * 255, b.ocean * 255, 255], (j * size + i) * 4)
+      data.set([b.desert * 255, b.forest * 255, b.ocean * 255, b.ice * 255], (j * size + i) * 4)
     }
   }
   const texture = new DataTexture(data, size, size, RGBAFormat)

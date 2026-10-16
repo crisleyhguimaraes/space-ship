@@ -5,7 +5,7 @@ import type { Layout } from './worlds.ts'
 export const SEA_LEVEL = 6
 export const VOLCANO = { x: -600, z: -250, radius: 220, height: 170, crater: 40, craterDepth: 60 }
 
-export type Biome = { ocean: number; desert: number; forest: number; meadow: number }
+export type Biome = { ocean: number; desert: number; forest: number; meadow: number; ice: number }
 
 const OCEAN_DEPTH = 14
 const DESERT_FLOOR = 22
@@ -23,22 +23,33 @@ export function biomeAt(x: number, z: number, layout: Layout = 'kaelith'): Biome
     case 'desert':
     case 'lava': {
       const meadow = layout === 'desert' ? ramp(w, 60, 130) * 0.6 : 0
-      return { ocean: 0, desert: 1 - meadow, forest: 0, meadow }
+      return { ocean: 0, desert: 1 - meadow, forest: 0, meadow, ice: 0 }
     }
     case 'ice': {
       const ocean = ramp(z + w * 0.6, -520, -720)
       const forest = ramp(w, 20, 110) * (1 - ocean)
-      return { ocean, desert: 0, forest, meadow: Math.max(0, 1 - ocean - forest) }
+      return { ocean, desert: 0, forest, meadow: Math.max(0, 1 - ocean - forest), ice: 0 }
     }
     case 'ocean': {
       const island = ramp(wobble(x + 900, z - 400) + w * 0.5, -10, 90)
-      return { ocean: 1 - island, desert: 0, forest: island * 0.7, meadow: island * 0.3 }
+      return { ocean: 1 - island, desert: 0, forest: island * 0.7, meadow: island * 0.3, ice: 0 }
+    }
+    case 'verdant': {
+      const ocean = ramp(z + w * 0.6, -640, -800)
+      const forest = ramp(wobble(x + 300, z + 700) + w * 0.3, -30, 70) * (1 - ocean)
+      return { ocean, desert: 0, forest, meadow: Math.max(0, 1 - ocean - forest), ice: 0 }
+    }
+    case 'anime': {
+      const ice = ramp(z + w * 0.6, -260, -520)
+      const desert = ramp(x + w, -240, -520) * (1 - ice)
+      const forest = ramp(x + w, 240, 520) * (1 - ice)
+      return { ocean: 0, desert, forest, meadow: Math.max(0, 1 - ice - desert - forest), ice }
     }
     default: {
       const ocean = ramp(z + w * 0.6, -520, -720)
       const desert = ramp(x + w, -200, -480) * (1 - ocean)
       const forest = ramp(x + w, 180, 460) * (1 - ocean)
-      return { ocean, desert, forest, meadow: Math.max(0, 1 - ocean - desert - forest) }
+      return { ocean, desert, forest, meadow: Math.max(0, 1 - ocean - desert - forest), ice: 0 }
     }
   }
 }

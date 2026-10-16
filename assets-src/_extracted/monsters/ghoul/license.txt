@@ -1,0 +1,11 @@
+Model Information:
+* title:	Goblin Ghoul
+* source:	https://sketchfab.com/3d-models/goblin-ghoul-a6c6fffee3d34823b6d87a7054782577
+* author:	Rodrigo Bento (https://sketchfab.com/rodrigobento)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Goblin Ghoul" (https://sketchfab.com/3d-models/goblin-ghoul-a6c6fffee3d34823b6d87a7054782577) by Rodrigo Bento (https://sketchfab.com/rodrigobento) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -124,3 +124,9 @@ Regra de desempate: fluidez > beleza > quantidade. Menos coisas, mais bonitas, a
 ## Fora do V1
 
 - Andar na superfície, objetivos, coleta, save, gamepad, toque, scattering atmosférico, sombras, WebGPU, mais de um planeta pousável, inglês.
+
+## Mundos temáticos (16/10/2026)
+
+- Três planetas visitáveis de franquias de terceiros (Pokémon, Digimon, animes). O repositório entrega estrutura, biomas, vilas e elenco descrito em dados; **não entrega nem busca modelos desses personagens**, porque os disponíveis em sites de modelos costumam ser extraídos de jogos. O usuário fornece os arquivos.
+- Elenco em `roster.ts`: papel, grupo, tamanho, habitat e presas por entrada. O jogo carrega só o elenco do mundo em que o jogador pousa e ignora modelo ausente (aviso no console).
+- Bioma novo de gelo (peso no canal alfa do mapa de biomas) e layouts `verdant` e `anime`. Vilas procedurais em terreno plano de campo, com flora e fauna afastadas delas.

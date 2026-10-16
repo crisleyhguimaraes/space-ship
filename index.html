@@ -26,6 +26,9 @@
     #help.off { opacity: 0; }
     #start { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, .55); cursor: pointer; font-size: 15px; letter-spacing: .3em; text-transform: uppercase; }
     #start.off { display: none; }
+    #fatal { position: fixed; inset: 0; display: grid; place-content: center; gap: 12px; padding: 24px; text-align: center; background: #05060d; font-size: 16px; line-height: 1.5; }
+    #fatal small { opacity: .5; font-size: 12px; word-break: break-all; }
+    #fatal.off { display: none; }
     #credits { position: fixed; right: 24px; bottom: 20px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.8; text-align: right; opacity: .85; }
     #credits a { color: inherit; }
     #credits.off { display: none; }
@@ -40,6 +43,7 @@
     <div id="help">W S acelera · mouse ou setas pilota · A D rola · shift turbo · tab alvo · E desce · M som · C créditos</div>
   </div>
   <div id="target" class="off"></div>
+  <div id="fatal" class="off"><strong></strong><small></small></div>
   <div id="damage"></div>
   <div id="start">Clique para pilotar</div>
   <div id="credits" class="off">

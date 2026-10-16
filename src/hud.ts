@@ -39,6 +39,12 @@ export function createHud() {
     hideStart: () => start.classList.add('off'),
     onStart: (fn: () => void) => start.addEventListener('click', fn),
     toggleCredits: () => credits.classList.toggle('off'),
+    showFatal(message: string, detail: string) {
+      const box = el('fatal')
+      box.querySelector('strong')!.textContent = message
+      box.querySelector('small')!.textContent = detail
+      box.classList.remove('off')
+    },
     setMuted: (muted: boolean) => muteBadge.classList.toggle('off', !muted),
     setTarget(marker: { x: number; y: number; text: string; offscreen: boolean } | null) {
       target.classList.toggle('off', marker === null)

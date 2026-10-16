@@ -9,7 +9,7 @@ Feito com Three.js, Vite e TypeScript. Sem backend, sem arquivos de áudio: todo
 ## O que tem
 
 **Espaço**
-- Sol com superfície animada e coroa, dez planetas em órbita real, três luas, anéis, cinturão de 2.500 asteroides, três cometas em elipses e um buraco negro com disco de acreção.
+- Sol com superfície animada e coroa, treze planetas em órbita real, três luas, anéis, cinturão de 2.500 asteroides, três cometas em elipses e um buraco negro com disco de acreção.
 - Cada planeta tem paleta, nuvens e brilho próprios, gerados em shader. Gigantes gasosos ganham faixas.
 - Navegação por alvo: **Tab** troca o corpo, o colchete mostra nome e distância e gruda na borda da tela quando o alvo sai do quadro.
 
@@ -21,7 +21,7 @@ Feito com Three.js, Vite e TypeScript. Sem backend, sem arquivos de áudio: todo
 
 ![Reentrada](docs/screenshots/03-reentrada.jpg)
 
-**Cinco mundos visitáveis**, cada um com relevo, chão, céu, flora e fauna próprios:
+**Oito mundos visitáveis**, cada um com relevo, chão, céu, flora e fauna próprios:
 
 | Mundo | Como é |
 |---|---|
@@ -30,6 +30,11 @@ Feito com Three.js, Vite e TypeScript. Sem backend, sem arquivos de áudio: todo
 | Brumal | campos de neve, mar gelado, abetos, manhã pálida |
 | Zafir | oceano com ilhas, selva, vulcão numa ilha |
 | Cinza | planície de cinzas e lava, céu vermelho ao anoitecer |
+| Monstrus | planeta de campos, bosques e lagos, pensado para criaturas no estilo Pokémon |
+| Digitalis | oceano, vulcão e geleira em tons de ciano, pensado para criaturas no estilo Digimon |
+| Animus | vilas, floresta, deserto e gelo, pensado para heróis, vilões e criaturas de uns 19 animes |
+
+Os três últimos vêm com a estrutura pronta e o elenco descrito em [docs/ROSTER.md](docs/ROSTER.md) (101 entradas com papel e comportamento). **Os modelos dos personagens não estão no repositório**: Pokémon, Digimon e os animes são propriedade de terceiros. Coloque você mesmo os arquivos em `public/models/`; o que faltar é ignorado.
 
 ![Vulcão e lago](docs/screenshots/04-vulcao-lago.jpg)
 ![Rubra](docs/screenshots/05-rubra.jpg)
