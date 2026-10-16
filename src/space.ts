@@ -29,6 +29,7 @@ import {
   Vector3,
 } from 'three'
 import { atmosphereShader, planetShader, simplex } from './planet-shader.ts'
+import { asset } from './asset.ts'
 import { buildStars } from './stars.ts'
 import { ASTEROID_BELT, BLACK_HOLE, COMETS, SUN_RADIUS, SYSTEM, cometPosition, orbitPosition, type MoonSpec, type PlanetSpec, type Rgb, type ShaderLook } from './system.ts'
 
@@ -42,7 +43,7 @@ const COMET_TAIL_LENGTH = 600
 export async function loadSpaceTextures(): Promise<Map<string, Texture>> {
   const loader = new TextureLoader()
   const urls = SYSTEM.flatMap((p) => (p.look.kind === 'textured' ? [p.look.color, p.look.normal] : []))
-  const textures = await Promise.all(urls.map((url) => loader.loadAsync(url)))
+  const textures = await Promise.all(urls.map((url) => loader.loadAsync(asset(url))))
   const map = new Map<string, Texture>()
   urls.forEach((url, i) => map.set(url, textures[i]))
   for (const p of SYSTEM) if (p.look.kind === 'textured') map.get(p.look.color)!.colorSpace = SRGBColorSpace

@@ -28,6 +28,7 @@ import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js'
 import { buildVillages } from './villages.ts'
 import { buildWildlife, type Cast, type ShipSense } from './wildlife.ts'
 import type { WorldProfile } from './worlds.ts'
+import { asset } from './asset.ts'
 
 export const SURFACE = { ceiling: 150, hoverGap: 4, edge: 950, spawn: new Vector3(0, 110, 650) }
 
@@ -50,7 +51,7 @@ export type SurfaceModels = { wildlife: Cast; flora: Object3D[]; ocean: { scene:
 export async function loadGroundTextures(): Promise<GroundTextures> {
   const loader = new TextureLoader()
   const load = async (name: string) => {
-    const texture = await loader.loadAsync(`/textures/ground-${name}.webp`)
+    const texture = await loader.loadAsync(asset(`/textures/ground-${name}.webp`))
     texture.colorSpace = SRGBColorSpace
     texture.wrapS = texture.wrapT = MirroredRepeatWrapping
     texture.anisotropy = 8
