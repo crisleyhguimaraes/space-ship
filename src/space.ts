@@ -62,6 +62,8 @@ export function buildSpace(textures: Map<string, Texture>, random = Math.random)
   light.position.copy(SUN_POSITION)
   scene.add(sun.group, stars, belt, hole.group, light, new HemisphereLight(0x3a4a7a, 0x101018, 1.2), ...planets.map((p) => p.group), ...comets.map((c) => c.group))
   const holeBody: Body = { key: 'buraco', name: 'Buraco negro', radius: BLACK_HOLE.radius, position: BLACK_HOLE.position, landable: false }
+  const sunBody: Body = { key: 'sol', name: 'Sol', radius: SUN_RADIUS, position: SUN_POSITION, landable: false }
+  bodies.push(sunBody, holeBody)
 
   const update = (dt: number, time: number, cameraPosition: Vector3) => {
     sun.material.uniforms.uTime.value = time
@@ -72,7 +74,7 @@ export function buildSpace(textures: Map<string, Texture>, random = Math.random)
     comets.forEach((comet, i) => comet.update(time, COMETS[i]))
   }
   update(0, 0, new Vector3())
-  return { scene, bodies, targets: [...bodies.filter((b) => SYSTEM.some((p) => p.key === b.key)), holeBody], update }
+  return { scene, bodies, targets: [sunBody, ...bodies.filter((b) => SYSTEM.some((p) => p.key === b.key)), holeBody], update }
 }
 
 function toColor(rgb: Rgb): Color {

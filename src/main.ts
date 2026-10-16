@@ -2,6 +2,7 @@ import { BloomEffect, EffectComposer, EffectPass, RenderPass, ToneMappingEffect,
 import { Euler, PerspectiveCamera, Quaternion, Timer, Vector3, WebGLRenderer } from 'three'
 import { FLIGHT, createFlight, forwardOf, stepFlight, type FlightInput } from './flight.ts'
 import { createAudio } from './audio.ts'
+import { NAV, avoidProfile, beltProfile, gravityPull, shellClearance, slideDirection, warnRange } from './navigation.ts'
 import { createHud } from './hud.ts'
 import { IDLE, createInput } from './input.ts'
 import { ReentryEffect } from './reentry.ts'
@@ -20,7 +21,11 @@ const AUTO_LAND_DISTANCE = 14
 const SPAWN_RADII = 12
 const TAKEOFF_RADII = 3.2
 const TAKEOFF_SPEED = 30
-const LANDING_LOCKOUT_SECONDS = 8
+const AVOID_PUSH = 70
+const SHELL_PUSH = 0.6
+const AVOID_TURN = 4.2
+const BELT_PUSH = 60
+const LANDING_LOCKOUT_SECONDS = 12
 const BASE_FOV = 60
 const ZOOM_FOV = 26
 const BLOOM_BASE = 1.1
@@ -125,10 +130,35 @@ let hull = 100
 let impact = 0
 let burnFlash = 0
 let landingLockout = 0
+let slingshotLeft = 0
+let spaceAlert = ''
+let spaceWarn = 0
+let assist = 0
+let pilotSteering = false
+let detour: { goal: Vector3; course: Vector3; body: Body } | null = null
+let danger = 0
+let beepTimer = 0
+const slingshot = new Vector3()
+const pullDir = new Vector3()
+const awayDir = new Vector3()
+const turnTarget = new Quaternion()
+const slideTo = new Vector3()
+const UP = new Vector3(0, 1, 0)
+const BEEP_SLOWEST = 0.9
+const REJOIN_AHEAD = 350
+const GOAL_REACHED = 160
+const DETOUR_RETURN_TURN = 2
+const DETOUR_ALIGNED = 0.9995
+const PILOT_TAKES_OVER = 0.02
+const DETOUR_START_FACING = 0.4
+const DETOUR_FREE_FACTOR = 1.2
+const toGoal = new Vector3()
+const BEEP_FASTEST = 0.16
 const orbitReturn = { offset: new Vector3(), quaternion: new Quaternion() }
 const turnRate = { yaw: 0, pitch: 0 }
 let alertText = ''
 let sightingText = ''
+let surfaceDanger = 0
 const tilt = new Quaternion()
 const tiltEuler = new Euler()
 
@@ -183,11 +213,13 @@ function frame() {
     if (events.hit) takeHit()
     if (events.flash) audio.thunder()
     alertText = events.threat ? `alerta · ${events.threat.label} a ${Math.round(events.threat.distance)}` : ''
+    surfaceDanger = events.threat ? Math.min(1, Math.max(0, 1 - events.threat.distance / 260)) : 0
     sightingText = events.nearby ? `${events.nearby.label} · ${Math.round(events.nearby.distance)}` : ''
   } else {
-    alertText = ''
+    alertText = spaceAlert
     sightingText = ''
   }
+  updateDanger(dt, mode === 'space' ? spaceWarn : surfaceDanger)
   impact = Math.max(0, impact - dt * 2)
   reentry.time = time
   const thrust = thrustLevel(commands.flight.throttle)
@@ -211,7 +243,12 @@ function frame() {
 }
 
 function flySpace(controls: typeof IDLE, land: boolean, dt: number) {
-  stepFlight(flight, controls, dt)
+  const damp = 1 - NAV.assistDamping * assist
+  pilotSteering = Math.abs(controls.yaw) + Math.abs(controls.pitch) > PILOT_TAKES_OVER
+  stepFlight(flight, { ...controls, yaw: controls.yaw * damp, pitch: controls.pitch * damp }, dt)
+  applySlingshot(dt)
+  applyGravity(dt)
+  spaceAlert = avoidHazards(dt)
   keepOutOfPlanets()
   landingLockout = Math.max(0, landingLockout - dt)
   const target = landingBody()
@@ -228,6 +265,128 @@ function divingAt(body: Body): boolean {
   return forwardOf(flight, heading).dot(toPlanet) > 0.3
 }
 
+// leaving a world throws the ship outward, hard at first and fading, so it clears the pull without being flung away
+function applySlingshot(dt: number) {
+  if (slingshotLeft <= 0) return
+  flight.position.addScaledVector(slingshot, dt)
+  slingshot.multiplyScalar(Math.exp(-NAV.slingshotDecay * dt))
+  slingshotLeft -= dt
+}
+
+// landable worlds tug the ship toward them as it nears, so a pass in close bends into the descent
+function applyGravity(dt: number) {
+  if (slingshotLeft > 0) return
+  const fadeIn = 1 - landingLockout / LANDING_LOCKOUT_SECONDS
+  for (const body of bodies) {
+    if (!WORLDS[body.key]) continue
+    const pull = gravityPull(surfaceDistance(body), body.radius) * fadeIn
+    if (pull === 0) continue
+    pullDir.subVectors(body.position, flight.position).normalize()
+    flight.position.addScaledVector(pullDir, pull * dt)
+  }
+}
+
+// anything that cannot be landed on warns the pilot, then pushes and turns the ship away before contact
+function avoidHazards(dt: number): string {
+  let worst = 0
+  let text = ''
+  let strongest = 0
+  const consider = (warn: number, push: number, label: string) => {
+    strongest = Math.max(strongest, push)
+    if (warn > worst) {
+      worst = warn
+      text = push > 0 ? `desvio automático · ${label}` : `alerta · ${label}`
+    }
+  }
+  for (const body of bodies) {
+    if (WORLDS[body.key]) continue
+    const distance = surfaceDistance(body)
+    const { warn, push } = avoidProfile(distance, body.radius)
+    if (warn === 0) continue
+    consider(warn, push, `${body.name} a ${Math.round(distance)}`)
+    if (push === 0) continue
+    awayDir.subVectors(flight.position, body.position).normalize()
+    flight.position.addScaledVector(awayDir, AVOID_PUSH * push * dt * SHELL_PUSH)
+    beginDetour(body)
+    if (detour?.body === body) steerDetour(awayDir, push, dt)
+    else followSurface(awayDir, push, dt)
+    holdShell(body)
+  }
+  finishDetour(dt)
+  const belt = beltProfile(Math.hypot(flight.position.x, flight.position.z), flight.position.y)
+  if (belt.warn > 0) consider(belt.warn, belt.push, 'cinturão de asteroides')
+  if (belt.push > 0) {
+    awayDir.set(0, flight.position.y >= 0 ? 1 : -1, 0)
+    flight.position.addScaledVector(awayDir, BELT_PUSH * belt.push * dt)
+    followSurface(awayDir, belt.push, dt)
+  }
+  spaceWarn = Math.max(worst * 0.35, strongest)
+  assist = strongest
+  return text
+}
+
+// the pilot's course becomes the destination: the ship arcs around the obstacle and then rejoins that line
+function beginDetour(body: Body) {
+  if (detour) return
+  forwardOf(flight, heading)
+  pullDir.subVectors(body.position, flight.position).normalize()
+  if (heading.dot(pullDir) < DETOUR_START_FACING) return
+  const course = heading.clone()
+  const ahead = pullDir.subVectors(body.position, flight.position).dot(course)
+  const closestOnLine = flight.position.clone().addScaledVector(course, ahead)
+  detour = { goal: closestOnLine.addScaledVector(course, body.radius + shellClearance(body.radius) + REJOIN_AHEAD), course, body }
+}
+
+function steerDetour(outward: Vector3, push: number, dt: number) {
+  if (!detour) return
+  if (pilotSteering) {
+    detour = null
+    return
+  }
+  toGoal.subVectors(detour.goal, flight.position).normalize()
+  const v = slideDirection(toGoal, outward, Math.abs(outward.y) > 0.9 ? { x: 1, y: 0, z: 0 } : UP)
+  slideTo.set(v.x, v.y, v.z)
+  turnTarget.setFromUnitVectors(FORWARD, slideTo)
+  flight.quaternion.rotateTowards(turnTarget, AVOID_TURN * Math.max(push, 0.4) * dt)
+}
+
+// with the body behind, the ship rejoins the original line at the goal just past it, then settles back onto the original heading
+function finishDetour(dt: number) {
+  if (!detour) return
+  if (pilotSteering) {
+    detour = null
+    return
+  }
+  if (surfaceDistance(detour.body) < warnRange(detour.body.radius) * DETOUR_FREE_FACTOR) return
+  const reached = flight.position.distanceTo(detour.goal) < GOAL_REACHED
+  toGoal.subVectors(detour.goal, flight.position).normalize()
+  const wanted = reached ? detour.course : toGoal
+  if (reached && forwardOf(flight, heading).dot(detour.course) > DETOUR_ALIGNED) {
+    detour = null
+    return
+  }
+  turnTarget.setFromUnitVectors(FORWARD, wanted)
+  flight.quaternion.rotateTowards(turnTarget, DETOUR_RETURN_TURN * dt)
+}
+
+// whatever the pilot does, the ship cannot sink below a thin shell around the body, so it ends up circling it
+function holdShell(body: Body) {
+  const floor = body.radius + shellClearance(body.radius)
+  awayDir.subVectors(flight.position, body.position)
+  const length = awayDir.length()
+  if (length >= floor || length === 0) return
+  flight.position.copy(body.position).addScaledVector(awayDir.normalize(), floor)
+}
+
+// the ship banks around the obstacle instead of reversing: only the part of its heading that points into the body is removed
+function followSurface(outward: Vector3, push: number, dt: number) {
+  forwardOf(flight, heading)
+  const v = slideDirection(heading, outward, UP.clone().cross(outward).lengthSq() > 1e-4 ? UP : { x: 1, y: 0, z: 0 })
+  slideTo.set(v.x, v.y, v.z)
+  turnTarget.setFromUnitVectors(FORWARD, slideTo)
+  flight.quaternion.rotateTowards(turnTarget, AVOID_TURN * push * dt)
+}
+
 function landingBody(): Body {
   return bodies.filter((b) => WORLDS[b.key]).reduce((best: Body, body: Body) => (surfaceDistance(body) < surfaceDistance(best) ? body : best))
 }
@@ -239,6 +398,17 @@ function onSurface() {
 function altitude(): number | null {
   if (!current || !onSurface()) return null
   return flight.position.y - current.ground(flight.position.x, flight.position.z)
+}
+
+// the red edge pulses faster and harder as the threat closes in, and a beep keeps the same tempo
+function updateDanger(dt: number, target: number) {
+  danger += (target - danger) * Math.min(1, dt * 6)
+  hud.setDanger(danger)
+  if (danger < 0.04) return
+  beepTimer -= dt
+  if (beepTimer > 0) return
+  audio.beep(danger)
+  beepTimer = BEEP_SLOWEST + (BEEP_FASTEST - BEEP_SLOWEST) * danger
 }
 
 function shipSense() {
@@ -365,6 +535,8 @@ function enterSpace() {
   flight.quaternion.setFromUnitVectors(FORWARD, away)
   flight.speed = TAKEOFF_SPEED
   landingLockout = LANDING_LOCKOUT_SECONDS
+  slingshot.copy(away).multiplyScalar(NAV.slingshotSpeed)
+  slingshotLeft = NAV.slingshotSeconds
   hull = 100
   snapCamera()
 }

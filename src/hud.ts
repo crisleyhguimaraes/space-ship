@@ -22,6 +22,7 @@ export function createHud() {
   const damage = el('damage')
   const muteBadge = el('mute')
   const target = el('target')
+  const danger = el('danger')
 
   return {
     update(f: HudFrame) {
@@ -39,6 +40,11 @@ export function createHud() {
     hideStart: () => start.classList.add('off'),
     onStart: (fn: () => void) => start.addEventListener('click', fn),
     toggleCredits: () => credits.classList.toggle('off'),
+    setDanger(level: number) {
+      danger.style.setProperty('--danger', level.toFixed(2))
+      danger.style.setProperty('--period', `${(1.1 - level * 0.8).toFixed(2)}s`)
+      danger.classList.toggle('on', level > 0.02)
+    },
     showFatal(message: string, detail: string) {
       const box = el('fatal')
       box.querySelector('strong')!.textContent = message

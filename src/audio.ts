@@ -43,6 +43,20 @@ export function createAudio() {
       engine.gain.gain.setTargetAtTime(tone.gain, now, 0.12)
       reentryGain.gain.setTargetAtTime(Math.sin(Math.min(reentry, 1) * Math.PI) * 0.5, now, 0.08)
     },
+    beep(urgency: number) {
+      if (!ctx || !master) return
+      const now = ctx.currentTime
+      const osc = ctx.createOscillator()
+      osc.type = 'square'
+      osc.frequency.value = 760 + Math.min(Math.max(urgency, 0), 1) * 560
+      const gain = ctx.createGain()
+      gain.gain.setValueAtTime(0.0001, now)
+      gain.gain.exponentialRampToValueAtTime(0.09, now + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11)
+      osc.connect(gain).connect(master)
+      osc.start(now)
+      osc.stop(now + 0.12)
+    },
     thunder() {
       if (!ctx || !master || !noise) return
       const source = ctx.createBufferSource()

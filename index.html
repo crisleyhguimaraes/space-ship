@@ -12,9 +12,12 @@
     #hud { position: fixed; inset: 0; pointer-events: none; display: grid; grid-template-rows: auto auto 1fr auto; padding: 20px 24px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
     #hud .top { display: flex; justify-content: space-between; opacity: .8; }
     #mute.off { display: none; }
-    #alert { justify-self: center; margin-top: 10px; color: #ff6a5a; font-size: 14px; letter-spacing: .25em; text-shadow: 0 0 14px rgba(255, 70, 50, .9); opacity: 0; animation: pulse 1s infinite; }
+    #alert { justify-self: center; margin-top: 10px; color: #ff6a5a; font-size: 18px; font-weight: 600; letter-spacing: .3em; text-shadow: 0 0 14px rgba(255, 70, 50, .9); opacity: 0; animation: pulse 1s infinite; }
     #alert.on { opacity: 1; }
     @keyframes pulse { 50% { opacity: .35; } }
+    #danger { position: fixed; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, transparent 30%, rgba(255, 24, 12, .6) 100%); }
+    #danger.on { animation: dangerPulse var(--period, 1s) ease-in-out infinite; }
+    @keyframes dangerPulse { 0%, 100% { opacity: calc(var(--danger, 0) * .25); } 50% { opacity: var(--danger, 0); } }
     #damage { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 40%, rgba(255, 30, 20, .6) 100%); opacity: 0; transition: opacity .4s; }
     #damage.on { opacity: 1; transition: none; }
     #target { position: fixed; left: 0; top: 0; pointer-events: none; padding: 6px 10px; border: 1px solid rgba(160, 200, 255, .55); border-radius: 4px; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #cfe0ff; white-space: nowrap; }
@@ -44,6 +47,7 @@
   </div>
   <div id="target" class="off"></div>
   <div id="fatal" class="off"><strong></strong><small></small></div>
+  <div id="danger"></div>
   <div id="damage"></div>
   <div id="start">Clique para pilotar</div>
   <div id="credits" class="off">

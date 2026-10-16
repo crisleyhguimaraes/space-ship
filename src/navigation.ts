@@ -3,9 +3,12 @@ import { ASTEROID_BELT } from './system.ts'
 export const NAV = {
   pullRadii: 5,
   pullMax: 22,
-  avoidMin: 140,
-  avoidRadii: 1.4,
-  warnFactor: 1.8,
+  avoidMin: 70,
+  avoidRadii: 0.7,
+  warnFactor: 1.5,
+  shellMin: 22,
+  shellRadii: 0.22,
+  assistDamping: 0.65,
   beltBand: 250,
   beltHalfThickness: 140,
   slingshotSpeed: 150,
@@ -19,6 +22,15 @@ export function gravityPull(distanceToSurface: number, radius: number): number {
   if (distanceToSurface >= reach) return 0
   const closeness = 1 - Math.max(distanceToSurface, 0) / reach
   return NAV.pullMax * closeness * closeness
+}
+
+// the thin layer the emergency system holds the ship to while it circles an obstacle
+export function shellClearance(radius: number): number {
+  return Math.max(NAV.shellMin, radius * NAV.shellRadii)
+}
+
+export function warnRange(radius: number): number {
+  return Math.max(NAV.avoidMin, radius * NAV.avoidRadii) * NAV.warnFactor
 }
 
 // warn: how urgent the alert is (0 none, 1 imminent); push: how hard the autopilot swerves
@@ -42,4 +54,21 @@ export function beltProfile(radialDistance: number, height: number): { warn: num
   const warn = 1 - away / NAV.beltBand
   const inside = outside === 0 && verticalOutside === 0
   return { warn: inside ? 1 : warn, push: inside ? 1 - Math.abs(height) / NAV.beltHalfThickness : 0 }
+}
+
+export type Vec3 = { x: number; y: number; z: number }
+
+// steering that follows the obstacle's surface: drop the part of the heading that points into the body, keep the rest.
+// Head-on, there is no tangent, so the ship breaks toward `fallback` (any direction perpendicular to the normal)
+export function slideDirection(forward: Vec3, outward: Vec3, fallback: Vec3): Vec3 {
+  const into = -(forward.x * outward.x + forward.y * outward.y + forward.z * outward.z)
+  if (into <= 0) return forward
+  let t = { x: forward.x + outward.x * into, y: forward.y + outward.y * into, z: forward.z + outward.z * into }
+  let length = Math.hypot(t.x, t.y, t.z)
+  if (length < 0.05) {
+    const along = fallback.x * outward.x + fallback.y * outward.y + fallback.z * outward.z
+    t = { x: fallback.x - outward.x * along, y: fallback.y - outward.y * along, z: fallback.z - outward.z * along }
+    length = Math.hypot(t.x, t.y, t.z) || 1
+  }
+  return { x: t.x / length, y: t.y / length, z: t.z / length }
 }

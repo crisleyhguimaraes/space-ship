@@ -130,3 +130,10 @@ Regra de desempate: fluidez > beleza > quantidade. Menos coisas, mais bonitas, a
 - Três planetas visitáveis de franquias de terceiros (Pokémon, Digimon, animes). O repositório entrega estrutura, biomas, vilas e elenco descrito em dados; **não entrega nem busca modelos desses personagens**, porque os disponíveis em sites de modelos costumam ser extraídos de jogos. O usuário fornece os arquivos.
 - Elenco em `roster.ts`: papel, grupo, tamanho, habitat e presas por entrada. O jogo carrega só o elenco do mundo em que o jogador pousa e ignora modelo ausente (aviso no console).
 - Bioma novo de gelo (peso no canal alfa do mapa de biomas) e layouts `verdant` e `anime`. Vilas procedurais em terreno plano de campo, com flora e fauna afastadas delas.
+
+## Sistema de emergência de navegação (16/10/2026)
+
+- Planetas pousáveis puxam a nave a até 5 raios (teto de 22 u/s, abaixo do motor). Decolar é um estilingue de 150 u/s com decaimento, e a gravidade volta aos poucos durante a trava de 12 s.
+- Qualquer corpo não pousável (planetas, luas, Sol, buraco negro) e o cinturão de asteroides disparam o aviso a pouco mais de um raio de segurança e o desvio automático a 70 ou 0,7 raio da superfície.
+- O desvio é um arco: o rumo do piloto vira o destino, a nave contorna o corpo deslizando por uma casca fina e volta à linha original num ponto logo depois dele, realinhando com o rumo. Qualquer comando do piloto cancela o desvio. Medido: desvio máximo de 67 e retorno a 1 unidade da linha.
+- Alarme: borda vermelha pulsando e bip, ambos mais rápidos quanto mais perto. O rótulo no topo diz o que gera o alerta e muda para "desvio automático" quando o sistema assume.
