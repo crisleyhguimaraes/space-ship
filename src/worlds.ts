@@ -1,7 +1,7 @@
 import type { Rgb } from './system.ts'
 import type { RosterName } from './roster.ts'
 
-export type Layout = 'kaelith' | 'desert' | 'ice' | 'ocean' | 'lava' | 'verdant' | 'anime'
+export type Layout = 'kaelith' | 'desert' | 'ice' | 'ocean' | 'lava' | 'verdant' | 'quadrants'
 
 export type WorldProfile = {
   key: string
@@ -113,7 +113,7 @@ export const WORLDS: Record<string, WorldProfile> = {
     herds: [],
     flocks: [],
     predators: [],
-    roster: 'pokemon',
+    roster: 'monsters',
     startDay: 0.4,
   },
   digitalis: {
@@ -129,13 +129,13 @@ export const WORLDS: Record<string, WorldProfile> = {
     herds: [],
     flocks: [],
     predators: [],
-    roster: 'digimon',
+    roster: 'machines',
     startDay: 0.62,
   },
   animus: {
     key: 'animus',
     seed: 79,
-    layout: 'anime',
+    layout: 'quadrants',
     sea: false,
     lake: true,
     volcano: false,
@@ -145,7 +145,7 @@ export const WORLDS: Record<string, WorldProfile> = {
     herds: [],
     flocks: [],
     predators: [],
-    roster: 'anime',
+    roster: 'adventurers',
     villages: 3,
     startDay: 0.3,
   },

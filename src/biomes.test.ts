@@ -34,15 +34,15 @@ test('o relevo moldado afunda o oceano, aplaina o deserto e ergue o vulcão', ()
   assert.ok(crater < rim - 10, `cratera ${crater} borda ${rim}`)
 })
 
-test('todo layout fecha em um e o mundo animê tem gelo ao norte, deserto a oeste, floresta a leste', () => {
-  for (const layout of ['kaelith', 'desert', 'ice', 'ocean', 'lava', 'verdant', 'anime'] as const) {
+test('todo layout fecha em um e o mundo em quadrantes tem gelo ao norte, deserto a oeste, floresta a leste', () => {
+  for (const layout of ['kaelith', 'desert', 'ice', 'ocean', 'lava', 'verdant', 'quadrants'] as const) {
     for (const [x, z] of [[0, 0], [-700, 100], [700, -300], [0, -900], [300, 600]]) {
       const b = biomeAt(x, z, layout)
       assert.ok(Math.abs(b.ocean + b.desert + b.forest + b.meadow + b.ice - 1) < 1e-6, `${layout} em ${x},${z}`)
     }
   }
-  assert.ok(biomeAt(0, -800, 'anime').ice > 0.8)
-  assert.ok(biomeAt(-800, 100, 'anime').desert > 0.8)
-  assert.ok(biomeAt(800, 100, 'anime').forest > 0.8)
-  assert.ok(biomeAt(0, 300, 'anime').meadow > 0.6)
+  assert.ok(biomeAt(0, -800, 'quadrants').ice > 0.8)
+  assert.ok(biomeAt(-800, 100, 'quadrants').desert > 0.8)
+  assert.ok(biomeAt(800, 100, 'quadrants').forest > 0.8)
+  assert.ok(biomeAt(0, 300, 'quadrants').meadow > 0.6)
 })

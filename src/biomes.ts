@@ -39,7 +39,7 @@ export function biomeAt(x: number, z: number, layout: Layout = 'kaelith'): Biome
       const forest = ramp(wobble(x + 300, z + 700) + w * 0.3, -30, 70) * (1 - ocean)
       return { ocean, desert: 0, forest, meadow: Math.max(0, 1 - ocean - forest), ice: 0 }
     }
-    case 'anime': {
+    case 'quadrants': {
       const ice = ramp(z + w * 0.6, -260, -520)
       const desert = ramp(x + w, -240, -520) * (1 - ice)
       const forest = ramp(x + w, 240, 520) * (1 - ice)

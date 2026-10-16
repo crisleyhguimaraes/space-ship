@@ -2,4 +2,9 @@ node_modules
 dist
 .DS_Store
 .playwright-mcp
-
+assets-src
+public/models/*
+!public/models/monsters/
+!public/models/machines/
+!public/models/adventurers/
+public/textures
