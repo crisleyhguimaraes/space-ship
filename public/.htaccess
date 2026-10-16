@@ -1,0 +1,10 @@
+AddType model/gltf-binary .glb
+AddType model/gltf+json .gltf
+AddType image/ktx2 .ktx2
+AddType application/wasm .wasm
+
+<IfModule mod_headers.c>
+  <FilesMatch "-[\w-]{8}\.(js|css|glb|ktx2|wasm|woff2)$">
+    Header set Cache-Control "max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>

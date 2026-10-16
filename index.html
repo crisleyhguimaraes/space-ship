@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Ship</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #dfe7ff; }
+    canvas { display: block; }
+    #hud { position: fixed; inset: 0; pointer-events: none; display: grid; grid-template-rows: auto auto 1fr auto; padding: 20px 24px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+    #hud .top { display: flex; justify-content: space-between; opacity: .8; }
+    #mute.off { display: none; }
+    #alert { justify-self: center; margin-top: 10px; color: #ff6a5a; font-size: 14px; letter-spacing: .25em; text-shadow: 0 0 14px rgba(255, 70, 50, .9); opacity: 0; animation: pulse 1s infinite; }
+    #alert.on { opacity: 1; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    #damage { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 40%, rgba(255, 30, 20, .6) 100%); opacity: 0; transition: opacity .4s; }
+    #damage.on { opacity: 1; transition: none; }
+    #target { position: fixed; left: 0; top: 0; pointer-events: none; padding: 6px 10px; border: 1px solid rgba(160, 200, 255, .55); border-radius: 4px; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #cfe0ff; white-space: nowrap; }
+    #target.edge { border-style: dashed; opacity: .75; }
+    #target.off { display: none; }
+    #hint { place-self: center; font-size: 18px; letter-spacing: .25em; opacity: 0; transition: opacity .3s; text-shadow: 0 0 14px rgba(120, 180, 255, .9); }
+    #hint.on { opacity: 1; }
+    #help { align-self: end; justify-self: start; line-height: 1.8; opacity: .8; transition: opacity 1.2s; }
+    #help.off { opacity: 0; }
+    #start { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, .55); cursor: pointer; font-size: 15px; letter-spacing: .3em; text-transform: uppercase; }
+    #start.off { display: none; }
+    #credits { position: fixed; right: 24px; bottom: 20px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.8; text-align: right; opacity: .85; }
+    #credits a { color: inherit; }
+    #credits.off { display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <div id="hud">
+    <div class="top"><span id="speed"></span><span id="hull"></span><span id="fps"></span><span id="mute" class="off">mudo</span><span id="body"></span></div>
+    <div id="alert"></div>
+    <div id="hint"></div>
+    <div id="help">W S acelera · mouse ou setas pilota · A D rola · shift turbo · tab alvo · E desce · M som · C créditos</div>
+  </div>
+  <div id="target" class="off"></div>
+  <div id="damage"></div>
+  <div id="start">Clique para pilotar</div>
+  <div id="credits" class="off">
+    Nave: <a href="https://sketchfab.com/3d-models/raven-spaceship-star-conflict-v2-5edb70fdc0da4e6aa7d96f5f19f7a419" target="_blank" rel="noopener">Raven spaceship</a> por Polenta, CC BY 4.0<br>
+    Rubra: <a href="https://sketchfab.com/3d-models/0781cd3ab59c4e6f94ae68d28fbf30a8" target="_blank" rel="noopener">Mars, free, low-poly</a> por the9thearl, Sketchfab Standard<br>
+    Pinheiros: <a href="https://sketchfab.com/3d-models/7daf178b3fa64e2fa7b2c2d19cf2a4bf" target="_blank" rel="noopener">Fir Spruce Pine</a> por High Quality Work, Sketchfab Standard<br>
+    Floresta noturna: <a href="https://sketchfab.com/3d-models/61f8c7817fe6457fb26e4814cfc48a3f" target="_blank" rel="noopener">a forest (3) with a road at night</a> por dasy444, CC BY 4.0<br>
+    Abetos e arbustos: <a href="https://sketchfab.com/3d-models/27b7e06431f244ef84e28bada7560c98" target="_blank" rel="noopener">The landscape is a forest in the mountains</a> por dasy444, Sketchfab Standard<br>
+    Lago: <a href="https://sketchfab.com/3d-models/83d3a7d7fe5a4aaa8cc48ef5b242c9a8" target="_blank" rel="noopener">Free Ocean wave animation</a> por the9thearl, Sketchfab Standard<br>
+    Rochas: <a href="https://sketchfab.com/3d-models/desert-rocks-fea49e7d365d4f46a0f2da1d22b68f80" target="_blank" rel="noopener">Desert rocks</a> por WeSVa, Sketchfab Standard<br>
+    Inseto: <a href="https://sketchfab.com/3d-models/01323e4b2563430f9da85cd255b6e176" target="_blank" rel="noopener">Insectoid Monster Rig</a> por DM-913, CC BY 4.0<br>
+    Lagarto voador: <a href="https://sketchfab.com/3d-models/55c4a578515f444d9ddc6de4150a1984" target="_blank" rel="noopener">flying lizard creature</a> por V8063882, CC BY 4.0<br>
+    Coelho-rato: <a href="https://sketchfab.com/3d-models/a38d3a0d4d4248f298189be7106d9faa" target="_blank" rel="noopener">Bunny Rat Monster</a> por DWN, CC BY 4.0<br>
+    Moscas: <a href="https://sketchfab.com/3d-models/000ec112ae7f4a8a93f847ccfd4031be" target="_blank" rel="noopener">Fly Rig</a> por Cherry, CC BY 4.0<br>
+    Órix: <a href="https://sketchfab.com/3d-models/a6de52aed4a840a28ff95c7d97f79564" target="_blank" rel="noopener">Animal: Oryx</a> por mehdi_beigi, CC BY 4.0<br>
+    Pato: <a href="https://sketchfab.com/3d-models/dd33cd2e30944a4aae2de1a06a828f4f" target="_blank" rel="noopener">Realistic Mallard Duck</a> por 3Dima, CC BY 4.0<br>
+    Águia: <a href="https://sketchfab.com/3d-models/dc4ecf9e517044b296e8ebb7505b42e7" target="_blank" rel="noopener">Day 23 - Wild Eagle</a> por Ida Faber, CC BY 4.0<br>
+    Elefante: <a href="https://sketchfab.com/3d-models/26ee59c981964681bf9f4e5eae2a3a26" target="_blank" rel="noopener">Elephant in the Rotunda</a> por Abby Gancz, CC BY 4.0<br>
+    Goblins: <a href="https://sketchfab.com/3d-models/goblin-ghoul-a6c6fffee3d34823b6d87a7054782577" target="_blank" rel="noopener">Goblin Ghoul</a> por Rodrigo Bento, CC BY 4.0<br>
+    Criatura, cervo e neve do chão: autores a confirmar<br>
+    Solo: recortes das cenas acima<br>
+    Ruído simplex: Ashima Arts, MIT
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

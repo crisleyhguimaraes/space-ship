@@ -1,0 +1,7 @@
+node_modules
+dist
+.DS_Store
+.playwright-mcp
+assets-src
+public/models
+public/textures

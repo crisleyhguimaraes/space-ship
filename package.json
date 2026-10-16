@@ -1,0 +1,24 @@
+{
+  "name": "space-ship",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "node --test \"src/**/*.test.ts\""
+  },
+  "dependencies": {
+    "postprocessing": "^6.39.5",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
+    "@types/node": "^26.6.5",
+    "@types/three": "^0.186.0",
+    "fbx2gltf": "^0.9.7-p1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}
