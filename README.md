@@ -69,7 +69,10 @@ Abra a URL que o terminal mostrar. **Os modelos não vêm no repositório**; vej
 ```sh
 npm test         # lógica pura: voo, órbitas, terreno, bandos, predadores, clima, dia e noite
 npm run build    # dist/ pronto para hospedagem estática
+npm run preview  # serve o dist/ em http://localhost:4173 para testar o build
 ```
+
+Para testar o build use `npm run preview`, **não o Live Server do VS Code**: o Live Server serve o `index.html` da raiz (que aponta para `/src/main.ts`) e o navegador rejeita o `.ts` com MIME `video/mp2t`. E não abra o `dist/index.html` com duplo clique (`file://`): módulos ES e os `.glb` não carregam fora de um servidor HTTP.
 
 Parâmetros de URL úteis:
 
